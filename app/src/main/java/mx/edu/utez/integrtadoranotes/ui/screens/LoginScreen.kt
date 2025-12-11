@@ -3,10 +3,7 @@ package mx.edu.utez.integrtadoranotes.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,9 +16,12 @@ import mx.edu.utez.integrtadoranotes.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
+    authViewModel: AuthViewModel,
     onLoginSuccess: () -> Unit
 ) {
-    val viewModel: AuthViewModel = viewModel()
+    val viewModel = authViewModel
+    var isLoginMode by remember { mutableStateOf(true) }
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -34,6 +34,11 @@ fun LoginScreen(
         if (isLoggedIn) {
             onLoginSuccess()
         }
+    }
+
+    // Limpiar error al cambiar de modo
+    LaunchedEffect(isLoginMode) {
+        viewModel.clearError()
     }
 
     Surface(
@@ -53,7 +58,32 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = if (isLoginMode) "Iniciar Sesión" else "Crear Cuenta",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Campo de nombre (solo en registro)
+            if (!isLoginMode) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = "Nombre")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             OutlinedTextField(
                 value = email,
@@ -63,7 +93,8 @@ fun LoginScreen(
                     Icon(Icons.Default.Email, contentDescription = "Email")
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -87,7 +118,8 @@ fun LoginScreen(
                 visualTransformation = if (passwordVisible) VisualTransformation.None
                 else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
             )
 
             if (error != null) {
@@ -102,12 +134,19 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { viewModel.login(email, password) },
+                onClick = {
+                    if (isLoginMode) {
+                        viewModel.login(email, password)
+                    } else {
+                        viewModel.register(name, email, password)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
+                enabled = !isLoading && email.isNotBlank() && password.isNotBlank() &&
+                        (isLoginMode || name.isNotBlank())
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -115,8 +154,26 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Iniciar Sesión")
+                    Text(if (isLoginMode) "Iniciar Sesión" else "Registrarse")
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(
+                onClick = {
+                    isLoginMode = !isLoginMode
+                    name = ""
+                    email = ""
+                    password = ""
+                }
+            ) {
+                Text(
+                    text = if (isLoginMode)
+                        "¿No tienes cuenta? Regístrate"
+                    else
+                        "¿Ya tienes cuenta? Inicia sesión"
+                )
             }
         }
     }

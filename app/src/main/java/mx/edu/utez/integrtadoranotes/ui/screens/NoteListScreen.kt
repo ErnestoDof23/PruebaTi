@@ -1,6 +1,5 @@
 package mx.edu.utez.integrtadoranotes.ui.screens
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,33 +12,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import mx.edu.utez.integrtadoranotes.viewmodel.AuthViewModel
+import mx.edu.utez.integrtadoranotes.data.model.Note
 import mx.edu.utez.integrtadoranotes.viewmodel.NoteViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteListScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    noteViewModel: NoteViewModel,
+    onLogout: () -> Unit
 ) {
-
-    val noteViewModel: NoteViewModel = viewModel()
-    val authViewModel: AuthViewModel = viewModel()
-
-
     val notes by noteViewModel.notes.collectAsState()
     val isLoading by noteViewModel.isLoading.collectAsState()
-    val token by authViewModel.token.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }
-
-    LaunchedEffect(token) {
-        token?.let {
-            noteViewModel.setToken(it)
-            noteViewModel.loadNotes()
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -49,12 +38,7 @@ fun NoteListScreen(
                     IconButton(onClick = { /* Buscar */ }) {
                         Icon(Icons.Default.Search, contentDescription = "Buscar")
                     }
-                    IconButton(onClick = {
-                        authViewModel.logout()
-                        navController.navigate("login") {
-                            popUpTo(0)
-                        }
-                    }) {
+                    IconButton(onClick = onLogout) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Salir")
                     }
                 }
@@ -71,6 +55,26 @@ fun NoteListScreen(
         Box(modifier = Modifier.padding(paddingValues)) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (notes.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "No tienes notas",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Presiona + para crear tu primera nota",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -99,10 +103,12 @@ fun NoteListScreen(
 
 @Composable
 fun NoteItem(
-    note: mx.edu.utez.integrtadoranotes.data.model.Note,
+    note: Note,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -126,7 +132,7 @@ fun NoteItem(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Actualizado: ${note.updatedAt}",
+                text = "Actualizado: ${dateFormat.format(note.updatedAt)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

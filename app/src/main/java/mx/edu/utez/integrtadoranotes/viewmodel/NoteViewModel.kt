@@ -1,62 +1,19 @@
 package mx.edu.utez.integrtadoranotes.viewmodel
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import mx.edu.utez.integrtadoranotes.data.model.Note
-import mx.edu.utez.integrtadoranotes.data.model.NoteRequest
-import mx.edu.utez.integrtadoranotes.data.remote.RetrofitInstance
-import java.util.Date
-import java.util.UUID
+import mx.edu.utez.integrtadoranotes.data.repository.RemoteRepository
 
 class NoteViewModel : ViewModel() {
 
-    companion object {
-        // MODO DESARROLLO: Notas mock compartidas entre instancias
-        private val mockNotes = mutableListOf(
-            Note(
-                id = "1",
-                title = "Nota para mi novia",
-                content = "Te amo princesa,",
-                imageUrl = null,
-                createdAt = Date(),
-                updatedAt = Date(),
-                userId = "dev-user"
-            ),
-            Note(
-                id = "2",
-                title = "Bienvenido a Notas App",
-                content = "Esta es tu primera nota de ejemplo. Puedes editarla, eliminarla o crear nuevas notas con imágenes.",
-                imageUrl = null,
-                createdAt = Date(),
-                updatedAt = Date(),
-                userId = "dev-user"
-            ),
-            Note(
-                id = "3",
-                title = "Lista de Compras",
-                content = "Leche, Pan, Huevos, Frutas, Verduras",
-                imageUrl = null,
-                createdAt = Date(),
-                updatedAt = Date(),
-                userId = "dev-user"
-            ),
-            Note(
-                id = "4",
-                title = "Ideas para Proyecto",
-                content = "1. Implementar tema oscuro\n2. Agregar búsqueda avanzada\n3. Sincronización en la nube\n4. Recordatorios",
-                imageUrl = null,
-                createdAt = Date(),
-                updatedAt = Date(),
-                userId = "dev-user"
-            )
-        )
-    }
+    private val repository = RemoteRepository()
 
-    private val _notes = MutableStateFlow<List<Note>>(mockNotes.toList())
+    private val _token = MutableStateFlow<String?>(null)
+    
+    private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes
 
     private val _selectedNote = MutableStateFlow<Note?>(null)
@@ -68,15 +25,10 @@ class NoteViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private var currentToken: String? = null
-
-    init {
-        // Cargar notas al iniciar
-        _notes.value = mockNotes.toList()
-    }
-
     fun setToken(token: String) {
-        currentToken = token
+        println("🔑 NoteViewModel - Token configurado: ${token.take(20)}...")
+        _token.value = token
+        loadNotes()
     }
 
     fun loadNotes() {
@@ -84,22 +36,19 @@ class NoteViewModel : ViewModel() {
             _isLoading.value = true
             _error.value = null
             try {
-                // MODO DESARROLLO: Cargar notas mock
-                kotlinx.coroutines.delay(300) // Simular latencia de red
-                _notes.value = mockNotes.toList()
-                
-                // PRODUCCIÓN: Descomentar para usar API real
-                /*
-                currentToken?.let { token ->
-                    val response = RetrofitInstance.api.getNotes("Bearer $token")
-                    if (response.isSuccessful) {
-                        _notes.value = response.body() ?: emptyList()
-                    } else {
-                        _error.value = "Error al cargar notas"
+                _token.value?.let { token ->
+                    println("📋 Cargando notas con token...")
+                    val result = repository.getNotes(token)
+                    result.onSuccess { notesList ->
+                        println("✅ Notas cargadas: ${notesList.size}")
+                        _notes.value = notesList
+                    }.onFailure { exception ->
+                        println("❌ Error al cargar notas: ${exception.message}")
+                        _error.value = exception.message ?: "Error al cargar notas"
                     }
-                }
-                */
+                } ?: println("⚠️ No hay token para cargar notas")
             } catch (e: Exception) {
+                println("❌ Excepción al cargar notas: ${e.message}")
                 _error.value = e.message ?: "Error desconocido"
             } finally {
                 _isLoading.value = false
@@ -110,29 +59,25 @@ class NoteViewModel : ViewModel() {
     fun createNote(title: String, content: String, imageUrl: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                // MODO DESARROLLO: Crear nota localmente
-                kotlinx.coroutines.delay(200)
-                val newNote = Note(
-                    id = UUID.randomUUID().toString(),
-                    title = title,
-                    content = content,
-                    imageUrl = imageUrl,
-                    createdAt = Date(),
-                    updatedAt = Date(),
-                    userId = "dev-user"
-                )
-                mockNotes.add(0, newNote)
-                loadNotes()
-                
-                // PRODUCCIÓN: Descomentar para usar API real
-                /*
-                currentToken?.let { token ->
-                    RetrofitInstance.api.createNote("Bearer $token", NoteRequest(title, content, imageUrl))
-                    loadNotes()
+                _token.value?.let { token ->
+                    println("📝 Creando nota: $title")
+                    println("🔑 Usando token: ${token.take(20)}...")
+                    val result = repository.createNote(token, title, content, imageUrl)
+                    result.onSuccess {
+                        println("✅ Nota creada exitosamente")
+                        loadNotes() // Recargar lista
+                    }.onFailure { exception ->
+                        println("❌ Error al crear nota: ${exception.message}")
+                        _error.value = exception.message ?: "Error al crear nota"
+                    }
+                } ?: run {
+                    println("⚠️ No hay token disponible para crear nota")
+                    _error.value = "No estás autenticado. Inicia sesión nuevamente."
                 }
-                */
             } catch (e: Exception) {
+                println("❌ Excepción al crear nota: ${e.message}")
                 _error.value = e.message ?: "Error desconocido"
             } finally {
                 _isLoading.value = false
@@ -143,28 +88,16 @@ class NoteViewModel : ViewModel() {
     fun updateNote(id: String, title: String, content: String, imageUrl: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                // MODO DESARROLLO: Actualizar nota localmente
-                kotlinx.coroutines.delay(200)
-                val index = mockNotes.indexOfFirst { it.id == id }
-                if (index != -1) {
-                    val oldNote = mockNotes[index]
-                    mockNotes[index] = oldNote.copy(
-                        title = title,
-                        content = content,
-                        imageUrl = imageUrl,
-                        updatedAt = Date()
-                    )
+                _token.value?.let { token ->
+                    val result = repository.updateNote(token, id, title, content, imageUrl)
+                    result.onSuccess {
+                        loadNotes() // Recargar lista
+                    }.onFailure { exception ->
+                        _error.value = exception.message ?: "Error al actualizar nota"
+                    }
                 }
-                loadNotes()
-                
-                // PRODUCCIÓN: Descomentar para usar API real
-                /*
-                currentToken?.let { token ->
-                    RetrofitInstance.api.updateNote("Bearer $token", id, NoteRequest(title, content, imageUrl))
-                    loadNotes()
-                }
-                */
             } catch (e: Exception) {
                 _error.value = e.message ?: "Error desconocido"
             } finally {
@@ -176,19 +109,16 @@ class NoteViewModel : ViewModel() {
     fun deleteNote(id: String) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                // MODO DESARROLLO: Eliminar nota localmente
-                kotlinx.coroutines.delay(200)
-                mockNotes.removeIf { it.id == id }
-                loadNotes()
-                
-                // PRODUCCIÓN: Descomentar para usar API real
-                /*
-                currentToken?.let { token ->
-                    RetrofitInstance.api.deleteNote("Bearer $token", id)
-                    loadNotes()
+                _token.value?.let { token ->
+                    val result = repository.deleteNote(token, id)
+                    result.onSuccess {
+                        loadNotes() // Recargar lista
+                    }.onFailure { exception ->
+                        _error.value = exception.message ?: "Error al eliminar nota"
+                    }
                 }
-                */
             } catch (e: Exception) {
                 _error.value = e.message ?: "Error desconocido"
             } finally {
@@ -199,5 +129,9 @@ class NoteViewModel : ViewModel() {
 
     fun selectNote(note: Note?) {
         _selectedNote.value = note
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

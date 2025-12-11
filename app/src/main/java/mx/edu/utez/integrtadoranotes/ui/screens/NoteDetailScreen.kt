@@ -1,6 +1,5 @@
 package mx.edu.utez.integrtadoranotes.ui.screens
 
-
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -21,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -35,7 +33,7 @@ import mx.edu.utez.integrtadoranotes.viewmodel.NoteViewModel
 fun NoteDetailScreen(
     navController: NavHostController,
     noteId: String?,
-    noteViewModel: NoteViewModel = hiltViewModel()
+    noteViewModel: NoteViewModel
 ) {
     val context = LocalContext.current
     val cameraManager = remember { CameraManager(context) }
@@ -49,12 +47,21 @@ fun NoteDetailScreen(
 
     val selectedNote by noteViewModel.selectedNote.collectAsState()
     val isLoading by noteViewModel.isLoading.collectAsState()
+    val error by noteViewModel.error.collectAsState()
+    
+    var showError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(selectedNote) {
         selectedNote?.let {
             title = it.title
             content = it.content
             imageUri = it.imageUrl?.let { uri -> Uri.parse(uri) }
+        }
+    }
+    
+    LaunchedEffect(error) {
+        error?.let {
+            showError = it
         }
     }
 
@@ -96,6 +103,15 @@ fun NoteDetailScreen(
                     }
                     IconButton(
                         onClick = {
+                            if (title.isBlank()) {
+                                showError = "El título es requerido"
+                                return@IconButton
+                            }
+                            if (content.isBlank()) {
+                                showError = "El contenido es requerido"
+                                return@IconButton
+                            }
+                            
                             scope.launch {
                                 if (noteId == null) {
                                     noteViewModel.createNote(
@@ -111,10 +127,14 @@ fun NoteDetailScreen(
                                         imageUri?.toString()
                                     )
                                 }
-                                navController.navigateUp()
+                                // Esperar un poco para que se complete la operación
+                                kotlinx.coroutines.delay(500)
+                                if (error == null) {
+                                    navController.navigateUp()
+                                }
                             }
                         },
-                        enabled = title.isNotBlank() && !isLoading
+                        enabled = title.isNotBlank() && content.isNotBlank() && !isLoading
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
@@ -154,6 +174,22 @@ fun NoteDetailScreen(
                     .weight(1f),
                 maxLines = 10
             )
+            
+            // Mostrar error si existe
+            if (showError != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = showError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                LaunchedEffect(showError) {
+                    kotlinx.coroutines.delay(3000)
+                    showError = null
+                    noteViewModel.clearError()
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
