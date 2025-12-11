@@ -52,10 +52,16 @@ fun NoteDetailScreen(
     var showError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(selectedNote) {
-        selectedNote?.let {
-            title = it.title
-            content = it.content
-            imageUri = it.imageUrl?.let { uri -> Uri.parse(uri) }
+        if (selectedNote != null) {
+            // Hay una nota seleccionada: cargar sus datos
+            title = selectedNote!!.title
+            content = selectedNote!!.content
+            imageUri = selectedNote!!.imageUrl?.let { Uri.parse(it) }
+        } else {
+            // No hay nota seleccionada: limpiar formulario
+            title = ""
+            content = ""
+            imageUri = null
         }
     }
     
@@ -65,11 +71,16 @@ fun NoteDetailScreen(
         }
     }
 
-    if (noteId != null) {
-        LaunchedEffect(Unit) {
+    // Limpiar o cargar nota según el modo
+    LaunchedEffect(noteId) {
+        if (noteId != null) {
+            // Modo EDITAR: Cargar la nota seleccionada
             noteViewModel.selectNote(
                 noteViewModel.notes.value.find { it.id == noteId }
             )
+        } else {
+            // Modo CREAR: Limpiar la nota seleccionada para empezar con formulario vacío
+            noteViewModel.selectNote(null)
         }
     }
 
