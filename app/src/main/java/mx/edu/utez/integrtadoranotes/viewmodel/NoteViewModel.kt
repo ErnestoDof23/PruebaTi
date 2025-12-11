@@ -56,7 +56,7 @@ class NoteViewModel : ViewModel() {
         )
     }
 
-    private val _notes = MutableStateFlow<List<Note>>(emptyList())
+    private val _notes = MutableStateFlow<List<Note>>(mockNotes.toList())
     val notes: StateFlow<List<Note>> = _notes
 
     private val _selectedNote = MutableStateFlow<Note?>(null)
@@ -69,6 +69,11 @@ class NoteViewModel : ViewModel() {
     val error: StateFlow<String?> = _error
 
     private var currentToken: String? = null
+
+    init {
+        // Cargar notas al iniciar
+        _notes.value = mockNotes.toList()
+    }
 
     fun setToken(token: String) {
         currentToken = token
