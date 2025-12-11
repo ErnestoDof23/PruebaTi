@@ -1,15 +1,9 @@
-package com.example.notasapp.ui.theme
+package mx.edu.utez.integrtadoranotes.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import mx.edu.utez.integrtadoranotes.ui.theme.Pink40
-import mx.edu.utez.integrtadoranotes.ui.theme.Pink80
-import mx.edu.utez.integrtadoranotes.ui.theme.Purple40
-import mx.edu.utez.integrtadoranotes.ui.theme.Purple80
-import mx.edu.utez.integrtadoranotes.ui.theme.PurpleGrey40
-import mx.edu.utez.integrtadoranotes.ui.theme.PurpleGrey80
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,

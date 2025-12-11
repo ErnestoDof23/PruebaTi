@@ -11,6 +11,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -123,8 +124,10 @@ fun CameraPreview(
         Manifest.permission.CAMERA
     )
 
-    if (!cameraPermissionState.status.isGranted) {
-        cameraPermissionState.launchPermissionRequest()
+    LaunchedEffect(cameraPermissionState.status.isGranted) {
+        if(!cameraPermissionState.status.isGranted){
+            cameraPermissionState.launchPermissionRequest()
+        }
     }
 
     AndroidView(

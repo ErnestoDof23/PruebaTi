@@ -1,7 +1,5 @@
 package mx.edu.utez.integrtadoranotes.data.model
 
-package mx.edu.utez.integrtadoranotes.data.model
-
 import java.util.Date
 
 data class Note(
