@@ -1,15 +1,14 @@
 package mx.edu.utez.integrtadoranotes.ui.nav
 
-
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.notasapp.ui.login.LoginScreen
-import com.example.notasapp.ui.notes.NoteDetailScreen
-import com.example.notasapp.ui.notes.NoteListScreen
+import mx.edu.utez.integrtadoranotes.ui.screens.LoginScreen
+import mx.edu.utez.integrtadoranotes.ui.screens.NoteDetailScreen
+import mx.edu.utez.integrtadoranotes.ui.screens.NoteListScreen
 import mx.edu.utez.integrtadoranotes.viewmodel.AuthViewModel
 
 @Composable

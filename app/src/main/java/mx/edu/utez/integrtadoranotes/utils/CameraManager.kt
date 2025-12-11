@@ -11,6 +11,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
@@ -113,7 +114,7 @@ class CameraManager(context: Context) {
 @Composable
 fun CameraPreview(
     cameraManager: CameraManager,
-    modifier: android.view.ViewGroup.LayoutParams? = null
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -127,12 +128,9 @@ fun CameraPreview(
     }
 
     AndroidView(
+        modifier = modifier,
         factory = { ctx ->
             PreviewView(ctx).apply {
-                if (modifier != null) {
-                    layoutParams = modifier
-                }
-
                 cameraManager.startCamera(this)
             }
         },

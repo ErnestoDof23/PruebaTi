@@ -1,8 +1,5 @@
 package mx.edu.utez.integrtadoranotes.ui.screens
 
-
-package mx.edu.utez.integrtadoranotes.ui.login
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons

@@ -1,11 +1,11 @@
-package com.example.notasapp
+package mx.edu.utez.integrtadoranotes
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
-import com.example.notasapp.ui.theme.NotasAppTheme
+import mx.edu.utez.integrtadoranotes.ui.theme.NotasAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import mx.edu.utez.integrtadoranotes.ui.nav.AppNavigation
 import mx.edu.utez.integrtadoranotes.utils.LightSensorManager

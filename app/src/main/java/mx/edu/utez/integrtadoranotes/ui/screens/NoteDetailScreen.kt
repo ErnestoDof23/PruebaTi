@@ -25,10 +25,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.notasapp.utils.CameraManager
-import com.example.notasapp.utils.CameraPreview
 import kotlinx.coroutines.launch
 import mx.edu.utez.integrtadoranotes.utils.CameraManager
+import mx.edu.utez.integrtadoranotes.utils.CameraPreview
 import mx.edu.utez.integrtadoranotes.viewmodel.NoteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
