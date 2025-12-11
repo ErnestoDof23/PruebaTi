@@ -28,6 +28,13 @@ class AuthViewModel : ViewModel() {
             _isLoading.value = true
             _error.value = null
             try {
+                // MODO DESARROLLO: Login automático sin backend
+                kotlinx.coroutines.delay(500) // Simular carga
+                _token.value = "dev-token-123456"
+                _isLoggedIn.value = true
+                
+                // PRODUCCIÓN: Descomentar para usar API real
+                /*
                 val response = RetrofitInstance.api.login(LoginRequest(email, password))
                 if (response.isSuccessful) {
                     response.body()?.let {
@@ -37,6 +44,7 @@ class AuthViewModel : ViewModel() {
                 } else {
                     _error.value = "Error de autenticación"
                 }
+                */
             } catch (e: Exception) {
                 _error.value = e.message ?: "Error desconocido"
             } finally {

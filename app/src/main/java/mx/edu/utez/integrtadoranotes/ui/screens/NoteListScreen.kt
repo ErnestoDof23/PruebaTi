@@ -23,8 +23,10 @@ import mx.edu.utez.integrtadoranotes.viewmodel.NoteViewModel
 fun NoteListScreen(
     navController: NavHostController
 ) {
-    val authViewModel: AuthViewModel = viewModel()
+
     val noteViewModel: NoteViewModel = viewModel()
+    val authViewModel: AuthViewModel = viewModel()
+
 
     val notes by noteViewModel.notes.collectAsState()
     val isLoading by noteViewModel.isLoading.collectAsState()
